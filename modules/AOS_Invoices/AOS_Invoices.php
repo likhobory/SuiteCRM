@@ -5,7 +5,7 @@
  * @package Advanced OpenSales for SugarCRM
  * @subpackage Products
  * @copyright SalesAgility Ltd http://www.salesagility.com
- * 
+ *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU AFFERO GENERAL PUBLIC LICENSE as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -29,18 +29,33 @@
  */
 require_once('modules/AOS_Invoices/AOS_Invoices_sugar.php');
 class AOS_Invoices extends AOS_Invoices_sugar {
-	
-	function AOS_Invoices(){	
-		parent::AOS_Invoices_sugar();
+
+	function __construct(){
+		parent::__construct();
 	}
+
+    /**
+     * @deprecated deprecated since version 7.6, PHP4 Style Constructors are deprecated and will be remove in 7.8, please update your code, use __construct instead
+     */
+    function AOS_Invoices(){
+        $deprecatedMessage = 'PHP4 Style Constructors are deprecated and will be remove in 7.8, please update your code';
+        if(isset($GLOBALS['log'])) {
+            $GLOBALS['log']->deprecated($deprecatedMessage);
+        }
+        else {
+            trigger_error($deprecatedMessage, E_USER_DEPRECATED);
+        }
+        self::__construct();
+    }
+
 
     function save($check_notify = FALSE){
         global $sugar_config;
 
-        if (empty($this->id)){
-            unset($_POST['group_id']);
-            unset($_POST['product_id']);
-            unset($_POST['service_id']);
+        if (empty($this->id)  || $this->new_with_id){
+            if(isset($_POST['group_id'])) unset($_POST['group_id']);
+            if(isset($_POST['product_id'])) unset($_POST['product_id']);
+            if(isset($_POST['service_id'])) unset($_POST['service_id']);
 
             if($sugar_config['dbconfig']['db_type'] == 'mssql'){
                 $this->number = $this->db->getOne("SELECT MAX(CAST(number as INT))+1 FROM aos_invoices");
@@ -52,6 +67,10 @@ class AOS_Invoices extends AOS_Invoices_sugar {
                 $this->number = $sugar_config['aos']['invoices']['initialNumber'];
             }
         }
+
+        require_once('modules/AOS_Products_Quotes/AOS_Utils.php');
+
+        perform_aos_save($this);
 
         parent::save($check_notify);
 

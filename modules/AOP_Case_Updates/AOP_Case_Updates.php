@@ -25,43 +25,46 @@
 /**
  * THIS CLASS IS FOR DEVELOPERS TO MAKE CUSTOMIZATIONS IN
  */
-require_once('modules/AOP_Case_Updates/AOP_Case_Updates_sugar.php');
-require_once("util.php");
+require_once 'modules/AOP_Case_Updates/AOP_Case_Updates_sugar.php';
+require_once 'util.php';
+require_once 'include/clean.php';
 class AOP_Case_Updates extends AOP_Case_Updates_sugar {
 
-    function AOP_Case_Updates(){
-        parent::AOP_Case_Updates_sugar();
+    public function __construct(){
+        parent::__construct();
     }
 
-    function save($check_notify = false){
-        global $current_user, $sugar_config;
-        parent::save($check_notify);
-        $email_template = new EmailTemplate();
-        if($_REQUEST['module'] == 'Import'){
-            //Don't send email on import
-            return;
+    /**
+     * @deprecated deprecated since version 7.6, PHP4 Style Constructors are deprecated and will be remove in 7.8, please update your code, use __construct instead
+     */
+    public function AOP_Case_Updates(){
+        $deprecatedMessage = 'PHP4 Style Constructors are deprecated and will be remove in 7.8, please update your code';
+        if(isset($GLOBALS['log'])) {
+            $GLOBALS['log']->deprecated($deprecatedMessage);
         }
-        $signature = array();
-        $addDelimiter = true;
-        $aop_config = $sugar_config['aop'];
-        if(!empty($this->contact_id)){
-            $emails = $this->getEmailForUser();
-            if($aop_config['user_email_template_id']){
-                $email_template->retrieve($aop_config['user_email_template_id']);
-            }
-            $addDelimiter = false;
-        }elseif($this->assigned_user_id && !$this->internal){
-            $emails = $this->getEmailForContact();
-            if($aop_config['contact_email_template_id']){
-                $email_template->retrieve($aop_config['contact_email_template_id']);
-                $signature = $current_user->getDefaultSignature();
-            }
+        else {
+            trigger_error($deprecatedMessage, E_USER_DEPRECATED);
         }
+        self::__construct();
+    }
 
-        if($emails && $email_template){
-            $GLOBALS['log']->info("AOPCaseUpdates: Calling send email");
-            $res = $this->sendEmail($emails, $email_template, $signature, $this->case_id, $addDelimiter);
+
+    function save($check_notify = false){
+        $this->name = SugarCleaner::cleanHtml($this->name);
+        $this->description = SugarCleaner::cleanHtml($this->description);
+        parent::save($check_notify);
+        if(file_exists('custom/modules/AOP_Case_Updates/CaseUpdatesHook.php')){
+            require_once 'custom/modules/AOP_Case_Updates/CaseUpdatesHook.php';
+        }else{
+            require_once 'modules/AOP_Case_Updates/CaseUpdatesHook.php';
         }
+        if(class_exists('CustomCaseUpdatesHook')){
+            $hook = new CustomCaseUpdatesHook();
+        }else{
+            $hook = new CaseUpdatesHook();
+        }
+        $hook->sendCaseUpdate($this);
+
     }
 
     /**
@@ -72,11 +75,10 @@ class AOP_Case_Updates extends AOP_Case_Updates_sugar {
         return $case;
     }
 
-    public function getContact(){
+    public function getContacts(){
         $case = $this->getCase();
         if($case){
-            $contacts = $case->get_linked_beans("contacts","Contacts");
-            return $contacts[0];
+            return $case->get_linked_beans("contacts","Contacts");
         }
         return null;
     }
@@ -96,23 +98,15 @@ class AOP_Case_Updates extends AOP_Case_Updates_sugar {
         return $user;
     }
 
-    private function getEmailForUser(){
+    public function getEmailForUser(){
         $user = $this->getUser();
         if($user){
             return array($user->emailAddress->getPrimaryAddress($user));
         }
         return array();
     }
-    private function getEmailForContact(){
-        $addresses = array();
-        $contact = $this->getContact();
-        if($contact){
-            $addresses[] = $contact->emailAddress->getPrimaryAddress($contact);
-        }
-        return $addresses;
-    }
 
-    private function populateTemplate(EmailTemplate $template, $addDelimiter = true){
+    private function populateTemplate(EmailTemplate $template, $addDelimiter = true, $contactId = null){
         global $app_strings, $sugar_config;
         //Order of beans seems to matter here so we place contact first.
         $userId = '';
@@ -120,7 +114,7 @@ class AOP_Case_Updates extends AOP_Case_Updates_sugar {
         if(!$user){
             $this->getUser();
         }
-        $beans = array("Contacts" => $this->getContact()->id,"Cases" => $this->getCase()->id, "Users" => $user->id, "AOP_Case_Updates" => $this->id);
+        $beans = array("Contacts" => $contactId,"Cases" => $this->getCase()->id, "Users" => $user->id, "AOP_Case_Updates" => $this->id);
         $ret = array();
         $ret['subject'] = from_html(aop_parse_template($template->subject,$beans));
         $body = aop_parse_template(str_replace("\$sugarurl",$sugar_config['site_url'],$template->body_html),$beans);
@@ -134,7 +128,7 @@ class AOP_Case_Updates extends AOP_Case_Updates_sugar {
         return $ret;
     }
 
-    private function sendEmail($emails, $template, $signature = array(), $caseId = null, $addDelimiter = true){
+    public function sendEmail($emails, $template, $signature = array(), $caseId = null, $addDelimiter = true, $contactId = null){
         $GLOBALS['log']->info("AOPCaseUpdates: sendEmail called");
         require_once("include/SugarPHPMailer.php");
         $mailer=new SugarPHPMailer();
@@ -153,8 +147,7 @@ class AOP_Case_Updates extends AOP_Case_Updates_sugar {
             $signaturePlain = $signature['signature'];
         }
         $emailSettings = getPortalEmailSettings();
-        $GLOBALS['log']->info("AOPCaseUpdates: sendEmail email portal settings are ".print_r($emailSettings,true));
-        $text = $this->populateTemplate($template, $addDelimiter);
+        $text = $this->populateTemplate($template, $addDelimiter, $contactId);
         $mailer->Subject = $text['subject'];
         $mailer->Body = $text['body'] . $signatureHTML;
         $mailer->IsHTML(true);
@@ -168,7 +161,7 @@ class AOP_Case_Updates extends AOP_Case_Updates_sugar {
             require_once('modules/Emails/Email.php');
             $emailObj = new Email();
             $emailObj->to_addrs = implode(",",$emails);
-            $emailObj->type= 'archived';
+            $emailObj->type= 'out';
             $emailObj->deleted = '0';
             $emailObj->name = $mailer->Subject;
             $emailObj->description = $mailer->AltBody;

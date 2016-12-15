@@ -3,36 +3,39 @@ if(!defined('sugarEntry') || !sugarEntry) die('Not A Valid Entry Point');
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
  * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
- * 
+
+ * SuiteCRM is an extension to SugarCRM Community Edition developed by Salesagility Ltd.
+ * Copyright (C) 2011 - 2014 Salesagility Ltd.
+ *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
  * Free Software Foundation with the addition of the following permission added
  * to Section 15 as permitted in Section 7(a): FOR ANY PART OF THE COVERED WORK
  * IN WHICH THE COPYRIGHT IS OWNED BY SUGARCRM, SUGARCRM DISCLAIMS THE WARRANTY
  * OF NON INFRINGEMENT OF THIRD PARTY RIGHTS.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
  * FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more
  * details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License along with
  * this program; if not, see http://www.gnu.org/licenses or write to the Free
  * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301 USA.
- * 
+ *
  * You can contact SugarCRM, Inc. headquarters at 10050 North Wolfe Road,
  * SW2-130, Cupertino, CA 95014, USA. or at email address contact@sugarcrm.com.
- * 
+ *
  * The interactive user interfaces in modified source and object code versions
  * of this program must display Appropriate Legal Notices, as required under
  * Section 5 of the GNU Affero General Public License version 3.
- * 
+ *
  * In accordance with Section 7(b) of the GNU Affero General Public License version 3,
  * these Appropriate Legal Notices must retain the display of the "Powered by
- * SugarCRM" logo. If the display of the logo is not reasonably feasible for
- * technical reasons, the Appropriate Legal Notices must display the words
- * "Powered by SugarCRM".
+ * SugarCRM" logo and "Supercharged by SuiteCRM" logo. If the display of the logos is not
+ * reasonably feasible for  technical reasons, the Appropriate Legal Notices must
+ * display the words  "Powered by SugarCRM" and "Supercharged by SuiteCRM".
  ********************************************************************************/
 
 /*********************************************************************************
@@ -69,11 +72,26 @@ class SugarEmailAddress extends SugarBean {
     /**
      * Sole constructor
      */
-    function SugarEmailAddress() {
-        parent::SugarBean();
+    public function __construct() {
+        parent::__construct();
         $this->index = self::$count;
         self::$count++;
     }
+
+    /**
+     * @deprecated deprecated since version 7.6, PHP4 Style Constructors are deprecated and will be remove in 7.8, please update your code, use __construct instead
+     */
+    public function SugarEmailAddress(){
+        $deprecatedMessage = 'PHP4 Style Constructors are deprecated and will be remove in 7.8, please update your code';
+        if(isset($GLOBALS['log'])) {
+            $GLOBALS['log']->deprecated($deprecatedMessage);
+        }
+        else {
+            trigger_error($deprecatedMessage, E_USER_DEPRECATED);
+        }
+        self::__construct();
+    }
+
 
     /**
      * Legacy email address handling.  This is to allow support for SOAP or customizations
@@ -162,23 +180,33 @@ class SugarEmailAddress extends SugarBean {
     }
 
     /**
-     * Saves email addresses for a parent bean
+     * Saves email addresses for a parent bean.
+     * The base class SugarBean::save($check_notify) method is never called from SugarEmailAddresses::save(...)
+     * The method's signature has been changed to correctly represent the save method call for SugarEmailAddress.
      * @param string $id Parent bean ID
      * @param string $module Parent bean's module
-     * @param array $addresses Override of $_REQUEST vars, used to handle non-standard bean saves
+     * @param array $new_addrs Override of $_REQUEST vars, used to handle non-standard bean saves
      * @param string $primary GUID of primary address
      * @param string $replyTo GUID of reply-to address
      * @param string $invalid GUID of invalid address
+     * @param string $optOut
+     * @param bool $in_workflow
+     * @return null
      */
-    function save($id, $module, $new_addrs=array(), $primary='', $replyTo='', $invalid='', $optOut='', $in_workflow=false) {
-        if(empty($this->addresses) || $in_workflow){
-            $this->populateAddresses($id, $module, $new_addrs,$primary);
+    public function save($id, $module, $new_addrs = array(), $primary='', $replyTo='', $invalid='', $optOut='', $in_workflow = false) {
+        if(gettype($id) == "boolean") {
+            $GLOBALS['log']->fatal('SugarEmailAddress::save() Invalid arguments - Parent method SugarBean::save($checknotify) is not implemented. Please pass the correct arguments into SugarEmailAddress::save()');
         }
 
-        //find all email addresses..
-        $current_links=array();
-        // Need to correct this to handle the Employee/User split
+        if(empty($this->addresses) || $in_workflow) {
+            $this->populateAddresses($id, $module, $new_addrs, $primary);
+        }
+
+        // handle the Employee/User split
         $module = $this->getCorrectedModule($module);
+
+        // find all email addresses
+        $current_links = array();
         $q2="select *  from email_addr_bean_rel eabr WHERE eabr.bean_id = '".$this->db->quote($id)."' AND eabr.bean_module = '".$this->db->quote($module)."' and eabr.deleted=0";
         $r2 = $this->db->query($q2);
         while(($row2=$this->db->fetchByAssoc($r2)) != null ) {
@@ -246,7 +274,24 @@ class SugarEmailAddress extends SugarBean {
             $this->db->query($eabr_unlink);
         }
         $this->stateBeforeWorkflow = null;
-        return;
+    }
+
+    /**
+     * Moved implementation _save to save.
+     * For backward compatibility the _save method has been preserved as a facade to save. In case it's used by a child
+     * class.
+     * @param string $id Parent bean ID
+     * @param string $module Parent bean's module
+     * @param array $new_addrs Override of $_REQUEST vars, used to handle non-standard bean saves
+     * @param string $primary GUID of primary address
+     * @param string $replyTo GUID of reply-to address
+     * @param string $invalid GUID of invalid address
+     * @param string $optOut
+     * @param bool $in_workflow
+     * @return NULL
+     */
+    private function _save($id, $module, $new_addrs = array(), $primary='', $replyTo='', $invalid='', $optOut='', $in_workflow = false) {
+        $this->save($id, $module, $new_addrs, $primary, $replyTo, $invalid, $optOut, $in_workflow);
     }
 
     /**
@@ -387,8 +432,8 @@ class SugarEmailAddress extends SugarBean {
                    $fromRequest = true;
                    break;
                 }
-            $widget_id = $_REQUEST[$module .'_email_widget_id'];
-    }
+                $widget_id = $_REQUEST[$module .'_email_widget_id'];
+            }
 
             //Iterate over the widgets for this module, in case there are multiple email widgets for this module
             while(isset($_REQUEST[$module . $widget_id . "emailAddress" . $widgetCount]))
@@ -723,7 +768,7 @@ class SugarEmailAddress extends SugarBean {
             return $guid;
         }
     }
- 
+
     /**
      * Returns Primary or newest email address
      * @param object $focus Object in focus
@@ -889,7 +934,14 @@ class SugarEmailAddress extends SugarBean {
 
         //determine if this should be a quickcreate form, or a quick create form under subpanels
         if ($this->view == "QuickCreate"){
-            $form = 'form_DC'.$this->view .'_'.$module;
+            // Fixed #1120 - fixed email validation for: Accounts -> Contacts subpanel -> Select -> Create Contact -> Save.
+            // If email is required it should highlight this field and show an error message.
+            // It didnt because the the form was named form_DCSubpanelQuickCreate_Contacts instead of expected form_SubpanelQuickCreate_Contacts
+            if($this->object_name = 'EmailAddress' && $saveModule == 'Contacts') {
+                $form = 'form_'.$this->view .'_'.$module;
+            } else {
+                $form = 'form_DC'.$this->view .'_'.$module;
+            }
             if(isset($_REQUEST['action']) && $_REQUEST['action']=='SubpanelCreates' ||  $_REQUEST['action']=='SubpanelEdits'){
                 $form = 'form_Subpanel'.$this->view .'_'.$module;
             }

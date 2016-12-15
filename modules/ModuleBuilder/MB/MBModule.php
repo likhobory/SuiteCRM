@@ -2,36 +2,39 @@
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
  * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
- * 
+
+ * SuiteCRM is an extension to SugarCRM Community Edition developed by Salesagility Ltd.
+ * Copyright (C) 2011 - 2014 Salesagility Ltd.
+ *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
  * Free Software Foundation with the addition of the following permission added
  * to Section 15 as permitted in Section 7(a): FOR ANY PART OF THE COVERED WORK
  * IN WHICH THE COPYRIGHT IS OWNED BY SUGARCRM, SUGARCRM DISCLAIMS THE WARRANTY
  * OF NON INFRINGEMENT OF THIRD PARTY RIGHTS.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
  * FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more
  * details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License along with
  * this program; if not, see http://www.gnu.org/licenses or write to the Free
  * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301 USA.
- * 
+ *
  * You can contact SugarCRM, Inc. headquarters at 10050 North Wolfe Road,
  * SW2-130, Cupertino, CA 95014, USA. or at email address contact@sugarcrm.com.
- * 
+ *
  * The interactive user interfaces in modified source and object code versions
  * of this program must display Appropriate Legal Notices, as required under
  * Section 5 of the GNU Affero General Public License version 3.
- * 
+ *
  * In accordance with Section 7(b) of the GNU Affero General Public License version 3,
  * these Appropriate Legal Notices must retain the display of the "Powered by
- * SugarCRM" logo. If the display of the logo is not reasonably feasible for
- * technical reasons, the Appropriate Legal Notices must display the words
- * "Powered by SugarCRM".
+ * SugarCRM" logo and "Supercharged by SuiteCRM" logo. If the display of the logos is not
+ * reasonably feasible for  technical reasons, the Appropriate Legal Notices must
+ * display the words  "Powered by SugarCRM" and "Supercharged by SuiteCRM".
  ********************************************************************************/
 
 define ( 'MB_TEMPLATES', 'include/SugarObjects/templates' ) ;
@@ -44,15 +47,15 @@ class MBModule
 {
     public $name = '' ;
     public $config = array (
-    'assignable' => 1 , 'acl' => 1 , 'has_tab' => 1 , 'studio' => 1 , 'audit' => 1 ) ;
+    'assignable' => 1 , 'security_groups' => 1, 'acl' => 1 , 'has_tab' => 1 , 'studio' => 1 , 'audit' => 1 ) ;
     public $mbpublicdefs ;
     public $errors = array ( ) ;
     public $path = '' ;
     public $implementable = array (
     'has_tab' => 'Navigation Tab' ) ;
-    public $always_implement = array ( 'assignable' => 'Assignable' , 'acl' => 'Access Controls' , 'studio' => 'Studio Support' , 'audit' => 'Audit Table' ) ;
+    public $always_implement = array ( 'assignable' => 'Assignable', 'security_groups' => 'Security Groups' , 'acl' => 'Access Controls' , 'studio' => 'Studio Support' , 'audit' => 'Audit Table' ) ;
     public $iTemplate = array (
-    'assignable' ) ;
+    'assignable', 'security_groups' ) ;
 
     public $config_md5 = null ;
 
@@ -303,6 +306,7 @@ class MBModule
             {
                 $this->createIcon () ;
             }
+
             $this->errors = array_merge ( $this->errors, $this->mbvardefs->errors ) ;
 
         }
@@ -416,8 +420,7 @@ class MBModule
         if (mkdir_recursive ( $path ))
         {
             $this->createClasses ( $path ) ;
-            if( $this->config['importable'] || in_array ( 'person', array_keys($this->config[ 'templates' ]) ) )
-                $this->createMenu ( $path ) ;
+            $this->createMenu ( $path );
             $this->copyCustomFiles ( $this->path , $path ) ;
             $this->copyMetaRecursive ( $this->path . '/metadata/', $path . '/metadata/', true ) ;
             $this->copyMetaRecursive ( $this->path . '/Dashlets/' . $this->key_name . 'Dashlet/',
@@ -455,6 +458,7 @@ class MBModule
             $class [ 'requires' ] [] = MB_TEMPLATES . '/' . $template . '/' . ucfirst ( $template ) . '.php' ;
         }
         $class [ 'importable' ] = $this->config [ 'importable' ] ;
+        $class [ 'inline_edit' ] = $this->config [ 'inline_edit' ] ;
         $this->mbvardefs->updateVardefs () ;
         $class [ 'fields' ] = $this->mbvardefs->vardefs [ 'fields' ] ;
         $class [ 'fields_string' ] = var_export_helper ( $this->mbvardefs->vardef [ 'fields' ] ) ;
@@ -796,19 +800,52 @@ class MBModule
 
     }
 
-    function createIcon ()
-    {
-        $icondir = $this->package_path . "/icons" ;
-        mkdir_recursive ( $icondir ) ;
-        $template = "" ;
-        foreach ( $this->config [ 'templates' ] as $temp => $val )
-            $template = $temp ;
-        copy ( "themes/default/images/icon_$template.gif", "$icondir/icon_" . ucfirst ( $this->key_name ) . ".gif" ) ;
-        copy ( "include/SugarObjects/templates/$template/icons/$template.gif", "$icondir/" . $this->key_name . ".gif" ) ;
-        if (file_exists("include/SugarObjects/templates/$template/icons/Create$template.gif"))
-        	copy ( "include/SugarObjects/templates/$template/icons/Create$template.gif", "$icondir/Create" . $this->key_name . ".gif" ) ;
-        if (file_exists("include/SugarObjects/templates/$template/icons/{$template}_32.gif"))
-        	copy ( "include/SugarObjects/templates/$template/icons/{$template}_32.gif", "$icondir/icon_" . $this->key_name . "_32.gif" ) ;
+    function createIcon() {
+
+        $icondir = $this->package_path . "/icons";
+        mkdir_recursive($icondir);
+        mkdir_recursive($icondir . "/sub_panel/modules");
+        mkdir_recursive($icondir . "/sidebar/modules");
+
+        $template = "";
+        foreach ($this->config ['templates'] as $temp => $val) {
+            $template = $temp;
+        }
+
+        // GIF Version
+            copy("include/SugarObjects/templates/$template/icons/$template.gif", "$icondir/icon_" . ucfirst($this->key_name) . ".gif");
+            copy("include/SugarObjects/templates/$template/icons/$template.gif", "$icondir/" . $this->key_name . ".gif");
+            // SVG Version
+            if (file_exists("include/SugarObjects/templates/$template/icons/$template.svg")) {
+                copy("include/SugarObjects/templates/$template/icons/$template.svg", "$icondir/" . $this->key_name . ".svg");
+            }
+            // GIF Version
+            if (file_exists("include/SugarObjects/templates/$template/icons/Create$template.gif")) {
+                copy("include/SugarObjects/templates/$template/icons/Create$template.gif", "$icondir/Create" . $this->key_name . ".gif");
+            }
+            // SVG Version
+            if (file_exists("include/SugarObjects/templates/$template/icons/Create$template.svg")) {
+                copy("include/SugarObjects/templates/$template/icons/Create$template.svg", "$icondir/Create" . $this->key_name . ".svg");
+            }
+            // GIF Version
+            if (file_exists("include/SugarObjects/templates/$template/icons/{$template}_32.gif")) {
+                copy("include/SugarObjects/templates/$template/icons/{$template}_32.gif", "$icondir/icon_" . $this->key_name . "_32.gif");
+            }
+            // SVG Version
+            if (file_exists("include/SugarObjects/templates/$template/icons/{$template}_32.svg")) {
+                copy("include/SugarObjects/templates/$template/icons/{$template}_32.svg", "$icondir/icon_" . $this->key_name . "_32.svg");
+            }
+
+            // SuiteP Support
+            if (file_exists("include/SugarObjects/templates/$template/icons/sidebar/modules/{$template}.svg")) {
+                copy("include/SugarObjects/templates/$template/icons/sidebar/modules/{$template}.svg", "$icondir/sidebar/modules/" . $this->key_name . ".svg");
+            }
+            if (file_exists("include/SugarObjects/templates/$template/icons/sub_panel/{$template}.svg")) {
+                copy("include/SugarObjects/templates/$template/icons/sub_panel/{$template}.svg", "$icondir/sub_panel/" . $this->key_name . ".svg");
+            }
+            if (file_exists("include/SugarObjects/templates/$template/icons/sub_panel/modules/{$template}.svg")) {
+                copy("include/SugarObjects/templates/$template/icons/sub_panel/modules/{$template}.svg", "$icondir/sub_panel/modules/" . $this->key_name . ".svg");
+            }
     }
 
     function removeFieldFromLayouts ( $fieldName )

@@ -45,7 +45,8 @@
 {assign var="alt_prev" value=$navStrings.previous}
 {assign var="alt_end" value=$navStrings.end}
 
-<table cellpadding='0' cellspacing='0' width='100%' border='0' class='list view'>
+<table id="dashletPanel" cellpadding='0' cellspacing='0' width='100%' border='0' class='list view default'>
+	<thead>
     <tr class="pagination" role=”presentation”>
         <td colspan='{$colCount+1}' align='right'>
             <table border='0' cellpadding='0' cellspacing='0' width='100%'>
@@ -54,7 +55,7 @@
                     <td align='right' nowrap='nowrap'>
                         {if $pageData.urls.startPage}
                             <!--<a href='#' onclick='return SUGAR.mySugar.retrieveDashlet("{$dashletId}", "{$pageData.urls.startPage}")' >{sugar_getimage name="start" ext=".png" width="14" height="13" alt=$navStrings.start other_attributes='align="absmiddle" border="0" '}&nbsp;{$navStrings.start}</a>&nbsp;-->
-							<button title='{$navStrings.start}' class='button' onclick='return SUGAR.mySugar.retrieveDashlet("{$dashletId}", "{$pageData.urls.startPage}")'>
+							<button title='{$navStrings.start}' class='button' onclick='return SUGAR.mySugar.retrieveDashlet("{$dashletId}", "{$pageData.urls.startPage}", false, false, true, $(this).closest("div[id^=pageNum_][id$=_div]").parent().parent())'>
 								{sugar_getimage name="start.png" attr='align="absmiddle" border="0" ' alt="$alt_start"}
 							</button>
 
@@ -67,7 +68,7 @@
                         {/if}
                         {if $pageData.urls.prevPage}
                             <!--<a href='#' onclick='return SUGAR.mySugar.retrieveDashlet("{$dashletId}", "{$pageData.urls.prevPage}")' >{sugar_getimage name="previous" ext=".png" width="8" height="13" alt=$navStrings.previous other_attributes='align="absmiddle" border="0" '}&nbsp;{$navStrings.previous}</a>&nbsp;-->
-							<button title='{$navStrings.previous}' class='button' onclick='return SUGAR.mySugar.retrieveDashlet("{$dashletId}", "{$pageData.urls.prevPage}")'>
+							<button title='{$navStrings.previous}' class='button' onclick='return SUGAR.mySugar.retrieveDashlet("{$dashletId}", "{$pageData.urls.prevPage}", false, false, true, $(this).closest("div[id^=pageNum_][id$=_div]").parent().parent())'>
 								{sugar_getimage name="previous.png" attr='align="absmiddle" border="0" ' alt="$alt_prev"}
 							</button>
 
@@ -80,7 +81,7 @@
                             <span class='pageNumbers'>({if $pageData.offsets.lastOffsetOnPage == 0}0{else}{$pageData.offsets.current+1}{/if} - {$pageData.offsets.lastOffsetOnPage} {$navStrings.of} {if $pageData.offsets.totalCounted}{$pageData.offsets.total}{else}{$pageData.offsets.total}{if $pageData.offsets.lastOffsetOnPage != $pageData.offsets.total}+{/if}{/if})</span>
                         {if $pageData.urls.nextPage}
                             <!--&nbsp;<a href='#' onclick='return SUGAR.mySugar.retrieveDashlet("{$dashletId}", "{$pageData.urls.nextPage}")' >{$navStrings.next}&nbsp;{sugar_getimage name="next" ext=".png" width="8" height="13" alt=$navStrings.next other_attributes='align="absmiddle" border="0" '}</a>&nbsp;-->
-							<button title='{$navStrings.next}' class='button' onclick='return SUGAR.mySugar.retrieveDashlet("{$dashletId}", "{$pageData.urls.nextPage}")'>
+							<button title='{$navStrings.next}' class='button' onclick='return SUGAR.mySugar.retrieveDashlet("{$dashletId}", "{$pageData.urls.nextPage}", false, false, true, $(this).closest("div[id^=pageNum_][id$=_div]").parent().parent())'>
 								{sugar_getimage name="next.png" attr='align="absmiddle" border="0" ' alt="$alt_next"}
 							</button>
 
@@ -93,7 +94,7 @@
                         {/if}
 						{if $pageData.urls.endPage  && $pageData.offsets.total != $pageData.offsets.lastOffsetOnPage}
                             <!--<a href='#' onclick='return SUGAR.mySugar.retrieveDashlet("{$dashletId}", "{$pageData.urls.endPage}")' >{$navStrings.end}&nbsp;{sugar_getimage name="end" ext=".png" width="14" height="13" alt=$navStrings.end other_attributes='align="absmiddle" border="0" '}</a></td>-->
-							<button title='{$navStrings.end}' class='button' onclick='return SUGAR.mySugar.retrieveDashlet("{$dashletId}", "{$pageData.urls.endPage}")'>
+							<button title='{$navStrings.end}' class='button' onclick='return SUGAR.mySugar.retrieveDashlet("{$dashletId}", "{$pageData.urls.endPage}", false, false, true, $(this).closest("div[id^=pageNum_][id$=_div]").parent().parent())'>
 								{sugar_getimage name="end.png" attr='align="absmiddle" border="0" ' alt="$alt_end"}
 							</button>
 
@@ -110,11 +111,18 @@
         </td>
     </tr>
     <tr height='20'>
+        {counter start=0 name="colCounter" print=false assign="colCounter"}
+        {assign var='datahide' value=""}
         {foreach from=$displayColumns key=colHeader item=params}
-	        <th scope='col' width='{$params.width}%'>
+            {if $colCounter == '1'}{assign var='datahide' value="phone"}{/if}
+            {if $colCounter == '3'}{assign var='datahide' value="phone,phonelandscape"}{/if}
+            {if $colCounter == '5'}{assign var='datahide' value="phone,phonelandscape,tablet"}{/if}
+            {if $colHeader == 'NAME' || $params.bold}<th scope='col' data-toggle="true">
+            {else}<th scope='col' data-hide="{$datahide}">{/if}
 				<div style='white-space: normal;'width='100%' align='{$params.align|default:'left'}'>
                 {if $params.sortable|default:true}
-	                <a href='#' onclick='return SUGAR.mySugar.retrieveDashlet("{$dashletId}", "{$pageData.urls.orderBy}{$params.orderBy|default:$colHeader|lower}&sugar_body_only=1&id={$dashletId}")' class='listViewThLinkS1' title="{$arrowAlt}">{sugar_translate label=$params.label module=$pageData.bean.moduleDir}</a>&nbsp;&nbsp;
+					<!-- dashlet: {$dashletId} -->
+	                <a href='#' onclick='return SUGAR.mySugar.retrieveDashlet("{$dashletId}", "{$pageData.urls.orderBy}{$params.orderBy|default:$colHeader|lower}&sugar_body_only=1&id={$dashletId}", false, false, true, $(this).closest("div[id^=pageNum_][id$=_div]").parent().parent())' class='listViewThLinkS1' title="{$arrowAlt}">{sugar_translate label=$params.label module=$pageData.bean.moduleDir}</a>&nbsp;&nbsp;
 	                {if $params.orderBy|default:$colHeader|lower == $pageData.ordering.orderBy}
 	                    {if $pageData.ordering.sortOrder == 'ASC'}
                             {capture assign="imageName"}arrow_down.{$arrowExt}{/capture}
@@ -137,12 +145,13 @@
 	           {/if}
 			   </div>
             </th>
+            {counter name="colCounter"}
         {/foreach}
 		{if !empty($quickViewLinks)}
 		<td  class='td_alt' nowrap="nowrap" width='1%'>&nbsp;</td>
 		{/if}
     </tr>
-
+	</thead>
 	{foreach name=rowIteration from=$data key=id item=rowData}
 		{if $smarty.foreach.rowIteration.iteration is odd}
 			{assign var='_rowColor' value=$rowColor[0]}
@@ -182,11 +191,10 @@
 				{if $pageData.rowAccess[$id].edit}
                     {capture name='tmp1' assign='alt_edit'}{sugar_translate label="LNK_EDIT"}{/capture}
                     {capture name='tmp1' assign='alt_view'}{sugar_translate label="LBL_VIEWINLINE"}{/capture}
-					<a
-                        title='{$editLinkString}' href='index.php?action=EditView&module={$pageData.bean.moduleDir}&record={$rowData.ID}&offset={$pageData.offsets.current+$smarty.foreach.rowIteration.iteration}&stamp={$pageData.stamp}&return_module=Home&return_action=index'>{sugar_getimage name="edit_inline.png" attr='border="0" ' alt="$alt_edit"}</a>
+                    <a title='{$editLinkString}' href='index.php?action=EditView&module={$pageData.bean.moduleDir}&record={$rowData.ID}&offset={$pageData.offsets.current+$smarty.foreach.rowIteration.iteration}&stamp={$pageData.stamp}&return_module=Home&return_action=index'>{sugar_getimage name="edit_inline.png" attr='border="0" ' alt="$alt_edit"}</a>
 				{/if}
 				{if $pageData.access.view}
-					<a title='{$viewLinkString}' href='index.php?action=DetailView&module={$params.module|default:$pageData.bean.moduleDir}&record={$rowData[$params.parent_id]|default:$rowData.ID}&offset={$pageData.offsets.current+$smarty.foreach.rowIteration.iteration}&stamp={$pageData.stamp}&return_module=Home&return_action=index' title="{sugar_translate label="LBL_VIEW_INLINE"}>{sugar_getimage name="view_inline.png" attr='border="0" ' alt="$alt_view"}</a>
+                <a title='{$viewLinkString}' href='index.php?action=DetailView&module={$params.module|default:$pageData.bean.moduleDir}&record={$rowData[$params.parent_id]|default:$rowData.ID}&offset={$pageData.offsets.current+$smarty.foreach.rowIteration.iteration}&stamp={$pageData.stamp}&return_module=Home&return_action=index' title="{sugar_translate label="LBL_VIEW_INLINE"}>{sugar_getimage name="view_inline.png" attr='border="0" ' alt="$alt_view"}</a>
 				{/if}
 			</td>
 			{/if}

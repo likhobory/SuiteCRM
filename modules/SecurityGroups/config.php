@@ -24,15 +24,13 @@ if(isset($mod_strings['LBL_MODULE_NAME'])) {
 	$mod_name = $mod_strings['LBL_MODULE_NAME'];
 }
 echo "\n<p>\n";
-echo get_module_title($mod_id, $mod_name.": ".$mod_strings['LBL_CONFIGURE_SETTINGS'], true);
+echo get_module_title($mod_id, $mod_name.": ".$mod_strings['LBL_CONFIGURE_SETTINGS'], false);
 echo "\n</p>\n";
 global $theme;
 global $currentModule;
 $theme_path = "themes/".$theme."/";
 $image_path = $theme_path."images/";
 
-
-require_once($theme_path.'layout_utils.php');
 
 $focus = new Administration();
 $focus->retrieveSettings(); //retrieve all admin settings.
@@ -110,6 +108,13 @@ if(isset($sugar_config['securitysuite_inherit_assigned']) && $sugar_config['secu
 $xtpl->assign('securitysuite_inherit_assigned', $securitysuite_inherit_assigned);
 
 
+// securitysuite_inbound_email
+$securitysuite_inbound_email = '';
+if(isset($sugar_config['securitysuite_inbound_email']) && $sugar_config['securitysuite_inbound_email'] == true) {
+    $securitysuite_inbound_email = 'CHECKED';
+} 
+$xtpl->assign('securitysuite_inbound_email', $securitysuite_inbound_email);
+
 
 //default security groups
 $groupFocus = new SecurityGroup();
@@ -122,7 +127,7 @@ foreach($defaultGroups as $default_id => $defaultGroup) {
 		".$mod_strings['LBL_GROUP']." ".$defaultGroup['group']."
 	</td>
 	<td class='dataField' width='30%'>
-		".$mod_strings['LBL_MODULE']." ".$defaultGroup['module']."
+		".$mod_strings['LBL_MODULE']." ".$app_list_strings['moduleList'][$defaultGroup['module']]."
 	</td>
 	<td class='dataLabel' width='40%'>
 		<input type='submit' tabindex='1' class='button' onclick=\"this.form.remove_default_id.value='".$default_id."'; this.form.action.value='SaveConfig'; this.form.return_module.value='SecurityGroups'; this.form.return_action.value='config';\" value='".$mod_strings['LBL_REMOVE_BUTTON_LABEL']."'/>
@@ -137,7 +142,7 @@ foreach($groups['list'] as $group) {
 	$options[$group->id] = $group->name;
 }
 $xtpl->assign("SECURITY_GROUP_OPTIONS", get_select_options_with_id($options, ""));
-			
+
 //$moduleList = $app_list_strings['moduleList'];
 
 //require_once('modules/Studio/DropDowns/DropDownHelper.php');
@@ -150,7 +155,7 @@ $security_modules["All"] = $mod_strings["LBL_ALL_MODULES"];//rost fix
 ksort($security_modules);
 $xtpl->assign("MODULE_OPTIONS", get_select_options_with_id($security_modules, "All"));
 
-								
+
 $xtpl->parse("main");
 
 $xtpl->out("main");

@@ -58,4 +58,6 @@ $mod_strings = array (
   'LBL_CASE_NAME' => 'Case',
   'LBL_CONTACT_NAME' => 'Contact',
   'LBL_INTERNAL' => 'Internal Update',
+  'LBL_AOP_INTERNAL' => 'Internal',
+  'LBL_AOP_CASE_ATTACHMENTS' => 'Attachments: ', 
 );

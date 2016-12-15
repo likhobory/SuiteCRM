@@ -3,7 +3,6 @@
 if (!defined('sugarEntry') || !sugarEntry)
     die('Not A Valid Entry Point');
 
-require_once('include/JSON.php');
 require_once('modules/jjwg_Markers/jjwg_Markers_sugar.php');
 require_once('modules/jjwg_Maps/jjwg_Maps.php');
 
@@ -15,12 +14,27 @@ class jjwg_Markers extends jjwg_Markers_sugar {
      */
     var $settings = array();
 
-    function jjwg_Markers($init=true) {
-        
-        parent::jjwg_Markers_sugar();
+    function __construct($init=true) {
+
+        parent::__construct();
         // Admin Config Setting
         if($init) $this->configuration();
     }
+
+    /**
+     * @deprecated deprecated since version 7.6, PHP4 Style Constructors are deprecated and will be remove in 7.8, please update your code, use __construct instead
+     */
+    function jjwg_Markers($init=true){
+        $deprecatedMessage = 'PHP4 Style Constructors are deprecated and will be remove in 7.8, please update your code';
+        if(isset($GLOBALS['log'])) {
+            $GLOBALS['log']->deprecated($deprecatedMessage);
+        }
+        else {
+            trigger_error($deprecatedMessage, E_USER_DEPRECATED);
+        }
+        self::__construct($init);
+    }
+
 
     /**
      * Load Configuration Settings using Administration Module
@@ -35,7 +49,7 @@ class jjwg_Markers extends jjwg_Markers_sugar {
     }
 
     /**
-     * 
+     *
      * Define Marker Location
      * @param $marker mixed (array or object)
      */
@@ -70,7 +84,7 @@ class jjwg_Markers extends jjwg_Markers_sugar {
     }
 
     /**
-     * 
+     *
      * Check for valid longitude
      * @param $lng float
      */
@@ -79,7 +93,7 @@ class jjwg_Markers extends jjwg_Markers_sugar {
     }
 
     /**
-     * 
+     *
      * Check for valid latitude
      * @param $lat float
      */

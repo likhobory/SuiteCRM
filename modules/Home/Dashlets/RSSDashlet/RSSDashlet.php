@@ -1,39 +1,43 @@
 <?php
 if(!defined('sugarEntry') || !sugarEntry) die('Not A Valid Entry Point');
-/*********************************************************************************
+/**
+ *
  * SugarCRM Community Edition is a customer relationship management program developed by
  * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
- * 
+ *
+ * SuiteCRM is an extension to SugarCRM Community Edition developed by SalesAgility Ltd.
+ * Copyright (C) 2011 - 2016 SalesAgility Ltd.
+ *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
  * Free Software Foundation with the addition of the following permission added
  * to Section 15 as permitted in Section 7(a): FOR ANY PART OF THE COVERED WORK
  * IN WHICH THE COPYRIGHT IS OWNED BY SUGARCRM, SUGARCRM DISCLAIMS THE WARRANTY
  * OF NON INFRINGEMENT OF THIRD PARTY RIGHTS.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
  * FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more
  * details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License along with
  * this program; if not, see http://www.gnu.org/licenses or write to the Free
  * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301 USA.
- * 
+ *
  * You can contact SugarCRM, Inc. headquarters at 10050 North Wolfe Road,
  * SW2-130, Cupertino, CA 95014, USA. or at email address contact@sugarcrm.com.
- * 
+ *
  * The interactive user interfaces in modified source and object code versions
  * of this program must display Appropriate Legal Notices, as required under
  * Section 5 of the GNU Affero General Public License version 3.
- * 
+ *
  * In accordance with Section 7(b) of the GNU Affero General Public License version 3,
  * these Appropriate Legal Notices must retain the display of the "Powered by
- * SugarCRM" logo. If the display of the logo is not reasonably feasible for
- * technical reasons, the Appropriate Legal Notices must display the words
- * "Powered by SugarCRM".
- ********************************************************************************/
+ * SugarCRM" logo and "Supercharged by SuiteCRM" logo. If the display of the logos is not
+ * reasonably feasible for  technical reasons, the Appropriate Legal Notices must
+ * display the words  "Powered by SugarCRM" and "Supercharged by SuiteCRM".
+ */
 
 
 require_once('include/Dashlets/Dashlet.php');
@@ -69,7 +73,7 @@ class RSSDashlet extends Dashlet
 
         if(isset($def['autoRefresh'])) $this->autoRefresh = $def['autoRefresh'];
 
-        parent::Dashlet($id); // call parent constructor
+        parent::__construct($id); // call parent constructor
 
         $this->isConfigurable = true; // dashlet is configurable
         $this->hasScript = false;  // dashlet has javascript attached to it
@@ -145,7 +149,19 @@ class RSSDashlet extends Dashlet
     {
         // suppress XML errors
         libxml_use_internal_errors(true);
-        $rssdoc = simplexml_load_file($url);
+        $data = file_get_contents($url);
+        $urlparse = parse_url($url);
+        if (empty($urlparse['scheme']) || empty($urlparse['host'])) {
+            return $this->dashletStrings['ERR_LOADING_FEED'];
+        }
+        if ($urlparse['scheme'] != 'http' && $urlparse['scheme'] != 'https') {
+            return $this->dashletStrings['ERR_LOADING_FEED'];
+        }
+        if(!$data) {
+            return $this->dashletStrings['ERR_LOADING_FEED'];
+        }
+        libxml_disable_entity_loader(true);
+        $rssdoc = simplexml_load_string($data);
         // return back the error message if the loading wasn't successful
         if (!$rssdoc)
             return $this->dashletStrings['ERR_LOADING_FEED'];
@@ -155,11 +171,14 @@ class RSSDashlet extends Dashlet
             foreach ( $rssdoc->channel as $channel ) {
                 if ( isset($channel->item ) ) {
                     foreach ( $channel->item as $item ) {
+                        $link = htmlspecialchars($item->link, ENT_QUOTES, 'UTF-8');
+                        $title = htmlspecialchars($item->title, ENT_QUOTES, 'UTF-8');
+                        $description = htmlspecialchars($item->description, ENT_QUOTES, 'UTF-8');
                         $output .= <<<EOHTML
 <tr>
 <td>
-    <h3><a href="{$item->link}" target="_child">{$item->title}</a></h3>
-    {$item->description}
+    <h3><a href="{$link}" target="_child">{$title}</a></h3>
+    {$description}
 </td>
 </tr>
 EOHTML;
@@ -173,11 +192,14 @@ EOHTML;
                 if ( empty($link) ) {
                     $link = $entry->link[0]['href'];
                 }
+                $link = htmlspecialchars($link, ENT_QUOTES, 'UTF-8');
+                $title = htmlspecialchars($entry->title, ENT_QUOTES, 'UTF-8');
+                $summary = htmlspecialchars($entry->summary, ENT_QUOTES, 'UTF-8');
                 $output .= <<<EOHTML
 <tr>
 <td>
-    <h3><a href="{$link}" target="_child">{$entry->title}</a></h3>
-    {$entry->summary}
+    <h3><a href="{$link}" target="_child">{$title}</a></h3>
+    {$summary}
 </td>
 </tr>
 EOHTML;

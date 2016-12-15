@@ -91,24 +91,37 @@ $viewdefs ['AOW_WorkFlow'] =
                     array (
                         0 =>
                         array (
+                            'name' => 'run_when',
+                            'label' => 'LBL_RUN_WHEN',
+                        ),
+                        1 =>
+                            array (
+                                'name' => 'flow_run_on',
+                                'studio' => 'visible',
+                                'label' => 'LBL_FLOW_RUN_ON',
+                            ),
+                    ),
+                    3 =>
+                    array (
+                        0 =>
+                        array (
                             'name' => 'multiple_runs',
                             'label' => 'LBL_MULTIPLE_RUNS',
                         ),
-                        1 => '',
                     ),
-                    3 =>
+                    4 =>
                     array (
                         0 => 'description',
                     ),
                 ),
-                'Conditions' =>
+                'LBL_CONDITION_LINES' =>
                 array (
                     0 =>
                     array (
                         0 => 'condition_lines',
                     ),
                 ),
-                'Actions' =>
+                'LBL_ACTION_LINES' =>
                 array (
                     0 =>
                     array (

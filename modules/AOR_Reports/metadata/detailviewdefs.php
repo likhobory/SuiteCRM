@@ -26,40 +26,36 @@ $viewdefs['AOR_Reports']['DetailView'] = array(
 'templateMeta' => array(
     'form' => array(
         'buttons'=>array(
-            'EDIT',
-            'DUPLICATE',
-            'DELETE',
-            array (
-                'customCode' => '<input type="submit" class="button" onClick="this.form.action.value=\'Export\';" value="{$MOD.LBL_EXPORT}">',
-                'sugar_html' =>
-                array (
-                    'type' => 'submit',
-                    'value' => '{$MOD.LBL_EXPORT}',
-                    'htmlOptions' =>
-                    array (
-                        'class' => 'button',
-                        'id' => 'export_button',
-                        'title' => '{$MOD.LBL_EXPORT}',
-                        'onclick' => 'this.form.action.value=\'Export\';',
-                        'name' => 'Export to CSV',
-                    ),
-                ),
+            array(
+                'customCode' => '{if $bean->aclAccess("edit","not_set","not_set",$bean->report_module)}
+                <input title="{$APP.LBL_EDIT_BUTTON_TITLE}" accessKey="{$APP.LBL_EDIT_BUTTON_KEY}" class="button primary" 
+                onclick="var _form = document.getElementById(\'formDetailView\'); _form.return_module.value=\'AOR_Reports\'; 
+                _form.return_action.value=\'DetailView\'; _form.return_id.value=\'{$id}\'; _form.action.value=\'EditView\';
+                SUGAR.ajaxUI.submitForm(_form);" type="button" name="Edit" id="edit_button" value="{$APP.LBL_EDIT_BUTTON_LABEL}">
+                {/if}'
+            ),
+            array(
+                'customCode' => '{if $bean->aclAccess("edit","not_set","not_set",$bean->report_module)}
+                <input title="{$APP.LBL_DUPLICATE_BUTTON_TITLE}" accessKey="{$APP.LBL_DUPLICATE_BUTTON_KEY}" class="button" 
+                onclick="var _form = document.getElementById(\'formDetailView\'); _form.return_module.value=\'AOR_Reports\'; 
+                _form.return_action.value=\'DetailView\'; _form.isDuplicate.value=true; _form.action.value=\'EditView\'; 
+                _form.return_id.value=\'{$id}\';SUGAR.ajaxUI.submitForm(_form);" type="button" name="Duplicate" 
+                value="{$APP.LBL_DUPLICATE_BUTTON_LABEL}" id="duplicate_button">
+                {/if}'
+            ),
+            array(
+                'customCode' => '{if $bean->aclAccess("delete","not_set","not_set",$bean->report_module)}
+                <input title="{$APP.LBL_DELETE_BUTTON_TITLE}" accessKey="{$APP.LBL_DELETE_BUTTON_KEY}" class="button" 
+                onclick="var _form = document.getElementById(\'formDetailView\'); _form.return_module.value=\'AOR_Reports\'; 
+                _form.return_action.value=\'ListView\'; _form.action.value=\'Delete\'; if(confirm(\'{$APP.NTC_DELETE_CONFIRMATION}\')) 
+                SUGAR.ajaxUI.submitForm(_form);" type="submit" name="Delete" value="{$APP.LBL_DELETE_BUTTON_LABEL}" id="delete_button">
+                {/if}',
             ),
             array (
-                'customCode' => '<input type="submit" class="button" onClick="this.form.action.value=\'DownloadPDF\';" value="{$MOD.LBL_DOWNLOAD_PDF}">',
-                'sugar_html' =>
-                array (
-                    'type' => 'submit',
-                    'value' => '{$MOD.LBL_DOWNLOAD_PDF}',
-                    'htmlOptions' =>
-                    array (
-                        'class' => 'button',
-                        'id' => 'download_pdf_button',
-                        'title' => '{$MOD.LBL_DOWNLOAD_PDF}',
-                        'onclick' => 'this.form.action.value=\'DownloadPDF\';',
-                        'name' => 'Download PDF Report',
-                    ),
-                ),
+                'customCode' => '<input type="button" class="button" id="download_csv_button_old" value="{$MOD.LBL_EXPORT}">',
+            ),
+            array (
+                'customCode' => '<input type="button" class="button" id="download_pdf_button_old" value="{$MOD.LBL_DOWNLOAD_PDF}">',
             ),
             array (
                 'customCode' => '<input type="button" class="button" onClick="openProspectPopup();" value="{$MOD.LBL_ADD_TO_PROSPECT_LIST}">',
@@ -75,6 +71,14 @@ $viewdefs['AOR_Reports']['DetailView'] = array(
     'includes'=> array(
         array('file'=>'modules/AOR_Reports/AOR_Report.js'),
     ),
+    'tabDefs' =>
+        array (
+            'DEFAULT' =>
+                array (
+                    'newTab' => false,
+                    'panelDefault' => 'collapsed',
+                ),
+        ),
 ),
 
 'panels' =>array (

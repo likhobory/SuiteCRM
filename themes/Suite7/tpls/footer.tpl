@@ -35,50 +35,51 @@
  ********************************************************************************/
 
 *}
-<!--end body panes-->
+
         </td></tr></table>
     </div>
-    <div class="clear"></div>
 
-</div>
+
+</main>
 
 <div id="bottomLinks">
-{if $AUTHENTICATED}
-{*{$BOTTOMLINKS}*}
-    {/if}
 </div>
 
-<div id="footer">
+<footer>
+    <div id="responseTime">
+        {$STATISTICS}
+    </div>
     {if $AUTHENTICATED}
+    <div class="companyLogo"><a href="index.php?module=Home&action=index" border="0"><img src="{$COMPANY_LOGO_URL}" width="{$COMPANY_LOGO_WIDTH}" height="{$COMPANY_LOGO_HEIGHT}" alt="{sugar_translate label='LBL_COMPANY_LOGO'}" border="0"/></a></div>
     <div id="links">
-        <button id="backtotop">Back To Top</button>
+        <button id="print_page" onclick="printpage()">{$MOD.LBL_SUITE_PRINT}</button>
+        <button id="backtotop">{$MOD.LBL_SUITE_TOP}</button>
     </div>
     {/if}
-	<div id="responseTime">
-    	{$STATISTICS}
-    </div>
+
     <div id="copyright_data">
-    <div id="dialog2" title="SuiteCRM - SugarCRM Supercharged!">
-        <p>SuiteCRM has been written and assembled by SalesAgility, one of the world's most knowledgeable SugarCRM consultancies.</p>
+    <div id="dialogSuite" title="{$MOD.LBL_SUITE_SUPERCHARGED}">
+        <p>{$MOD.LBL_SUITE_DESC1}</p>
         <br>
-        <p>SuiteCRM is intended to deliver on the promise of SugarCRM - a freely available open source CRM project that combines great functionality, with community and commitment.</p>
+        <p>{$MOD.LBL_SUITE_DESC2}</p>
         <br>
-        <p>There will be no licenced software as part of the project managed by SalesAgility. All the code is free. All the code is available for free download. There is no hidden agenda to charge for access to the code. It is and always will be free and open source. There will be no paid-for versions.</p>
+        <p>{$MOD.LBL_SUITE_DESC3}</p>
+        <br>
     </div>
-    <div id="dialog" title="&copy; Powered by SugarCRM">
+    <div id="dialogSugar" title="&copy; {$MOD.LBL_SUITE_POWERED_BY}">
         <p>{$COPYRIGHT}</p>
     </div>
 
-    <button id="admin_options">Supercharged by SuiteCRM</button>
-    <button id="powered_by">&copy; Powered by SugarCRM</button>
+    <button id="admin_options">{$MOD.LBL_SUITE_SUPERCHARGED}</button>
+    <button id="powered_by">&copy; {$MOD.LBL_SUITE_POWERED_BY}</button>
     </div>
 
-</div>
+</footer>
 <script>
 {literal}
-
-if(SUGAR.util.isTouchScreen()) {
-        setTimeout(resizeHeader,10000);
+function printpage()
+{
+    window.print();
 }
 
 //qe_init function sets listeners to click event on elements of 'quickEdit' class
@@ -137,7 +138,7 @@ function qe_init(){
         });
 
         $(function() {
-            $( "#dialog, #dialog2" ).dialog({
+            $( "#dialogSugar, #dialogSuite" ).dialog({
                 autoOpen: false,
                 show: {
                     effect: "blind",
@@ -149,11 +150,11 @@ function qe_init(){
                 }
             });
             $( "#powered_by" ).click(function() {
-                $( "#dialog" ).dialog( "open" );
+                $( "#dialogSugar" ).dialog( "open" );
                 $("#overlay").show().css({"opacity": "0.5"});
             });
             $( "#admin_options" ).click(function() {
-                $( "#dialog2" ).dialog( "open" );
+                $( "#dialogSuite" ).dialog( "open" );
             });
         });
 
@@ -166,6 +167,18 @@ function qe_init(){
             event.preventDefault();
             $('html, body').animate({scrollTop:0}, 500); // Scroll speed to the top
         });
+    </script>
+    <script>
+        function toggleCodes(on) {
+            var obj = document.getElementById('icons');
+
+            if (on) {
+                obj.className += ' codesOn';
+            } else {
+                obj.className = obj.className.replace(' codesOn', '');
+            }
+        }
+
     </script>
 {/literal}
 </body>

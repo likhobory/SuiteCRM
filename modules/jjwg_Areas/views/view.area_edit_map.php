@@ -4,30 +4,36 @@ if(!defined('sugarEntry') || !sugarEntry) die('Not A Valid Entry Point');
 
 class Jjwg_AreasViewArea_Edit_Map extends SugarView {
 
-  function Jjwg_AreasViewArea_Edit_Map() {
-    parent::SugarView();
+  function __construct() {
+    parent::__construct();
   }
-  
+
+    /**
+     * @deprecated deprecated since version 7.6, PHP4 Style Constructors are deprecated and will be remove in 7.8, please update your code, use __construct instead
+     */
+    function Jjwg_AreasViewArea_Edit_Map(){
+        $deprecatedMessage = 'PHP4 Style Constructors are deprecated and will be remove in 7.8, please update your code';
+        if(isset($GLOBALS['log'])) {
+            $GLOBALS['log']->deprecated($deprecatedMessage);
+        }
+        else {
+            trigger_error($deprecatedMessage, E_USER_DEPRECATED);
+        }
+        self::__construct();
+    }
+
+
   function display() {
-    
-    global $sugar_config;
-    global $jjwg_config;
-    global $currentModule;
-    global $theme;
-    global $mod_strings;
-    global $loc;
-    global $polygon;
-    $jsonObj = new JSON(JSON_LOOSE_TYPE);
 
 ?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"> 
- 
-<html xmlns="http://www.w3.org/1999/xhtml"> 
-  <head> 
-  <title><?php echo $mod_strings['LBL_AREA_MAP']; ?></title> 
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+  <title><?php echo $GLOBALS['mod_strings']['LBL_AREA_MAP']; ?></title>
   <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
-  <meta http-equiv="content-type" content="text/html; charset=utf-8"/> 
-  <link rel="stylesheet" type="text/css" href="cache/themes/<?php echo $theme; ?>/css/style.css" />
+  <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+  <link rel="stylesheet" type="text/css" href="cache/themes/<?php echo $GLOBALS['theme']; ?>/css/style.css" />
   <style type="text/css">
     html,body{
       margin:0;
@@ -36,13 +42,9 @@ class Jjwg_AreasViewArea_Edit_Map extends SugarView {
       height:100%;
       font-family:Arial, Helvetica, sans-serif;
     }
-      
-    #header{ 
-      vertical-align: top;
-    }
     #main-map{
-      width: 500px;
-      height: 300px;
+      width: 700px;
+      height: 500px;
       float: left;
     }
     #side{
@@ -53,9 +55,9 @@ class Jjwg_AreasViewArea_Edit_Map extends SugarView {
       line-height: 16px;
       font-family:Arial,Verdana,Helvetica,sans-serif;
       color: #444444;
-      font-weight: normal;  
+      font-weight: normal;
     }
-    
+
     #dataPanel{
       overflow:auto;
       border:1px solid #DDDDDD;
@@ -63,25 +65,25 @@ class Jjwg_AreasViewArea_Edit_Map extends SugarView {
       line-height: 16px;
       font-family:Arial,Verdana,Helvetica,sans-serif;
       color: #444444;
-      font-weight: normal;  
+      font-weight: normal;
     }
     input{
       font-size: 12px;
       line-height: 16px;
       font-family:Arial,Verdana,Helvetica,sans-serif;
       color: #444444;
-      font-weight: normal;  
+      font-weight: normal;
     }
-    
+
     input.navi{
       font-size: 12px;
       line-height: 16px;
       font-family:Arial,Verdana,Helvetica,sans-serif;
       color: #444444;
-      font-weight: normal;  
+      font-weight: normal;
       margin-bottom:10px;
     }
-    #header p{
+    p{
       font-size: 12px;
       line-height: 16px;
       font-family:Arial,Verdana,Helvetica,sans-serif;
@@ -106,16 +108,16 @@ class Jjwg_AreasViewArea_Edit_Map extends SugarView {
   <script type="text/javascript">
 
 // Define Map Data for Javascript
-var jjwg_config_defaults = <?php echo (!empty($jjwg_config_defaults)) ? $jsonObj->encode($jjwg_config_defaults) : '[]'; ?>;
-var jjwg_config = <?php echo (!empty($jjwg_config)) ? $jsonObj->encode($jjwg_config) : '[]'; ?>;
-var polygonPoints = <?php echo (!empty($polygon)) ? $jsonObj->encode($polygon) : '[]'; ?>;    
+var jjwg_config_defaults = <?php echo (!empty($GLOBALS['jjwg_config_defaults'])) ? json_encode($GLOBALS['jjwg_config_defaults']) : '[]'; ?>;
+var jjwg_config = <?php echo (!empty($GLOBALS['jjwg_config'])) ? json_encode($GLOBALS['jjwg_config']) : '[]'; ?>;
+var polygonPoints = <?php echo (!empty($GLOBALS['polygon'])) ? json_encode($GLOBALS['polygon']) : '[]'; ?>;
 
 $(function(){
 
     //create map
     var latLng = new google.maps.LatLng(
-        <?php echo (!empty($loc['lat'])) ? $loc['lat'] : $jjwg_config['map_default_center_latitude']; ?>, 
-        <?php echo (!empty($loc['lng'])) ? $loc['lng'] : $jjwg_config['map_default_center_longitude']; ?> 
+        <?php echo (!empty($GLOBALS['loc']['lat'])) ? $GLOBALS['loc']['lat'] : $GLOBALS['jjwg_config']['map_default_center_latitude']; ?>,
+        <?php echo (!empty($GLOBALS['loc']['lng'])) ? $GLOBALS['loc']['lng'] : $GLOBALS['jjwg_config']['map_default_center_longitude']; ?>
     );
 
     var myOptions = {
@@ -154,9 +156,9 @@ $(function(){
     var p = [];
     var myAreaPolygon = [];
 
-    <?php
-    if (!empty($polygon)) {
-    ?>
+
+    if (polygonPoints.length > 0) {
+
         // Define coordinates from objects
         myCoords = [];
         for (var j=0; j<polygonPoints.length; j++) {
@@ -175,35 +177,33 @@ $(function(){
             zIndex: 1
         });
         //console.log(myAreaPolygon[0]);
-        
+
         // Set to global array for later reference and destroy
         myAreaPolygon[0].setMap(map);
-        
-        
+
+
         // Right click to remove vertex
         myAreaPolygon[0].addListener('rightclick', function(mev){
             if (mev.vertex != null && this.getPath().getLength() > 2) {
                 this.getPath().removeAt(mev.vertex);
             }
         });
-        
-        
+
+
         map.fitBounds(bounds);
 
-    <?php
     }
-    ?>
-    
-    
+
+
     // Event listener on add new polygon
     google.maps.event.addListener(drawingManager, 'polygoncomplete', function(polygon) {
         // Push to reference array
         myAreaPolygon.push(polygon);
     });
-    
-    
+
+
     // Reset polygon(s)
-    $('#reset').click(function(){ 
+    $('#reset').click(function(){
         // Destroy existing polygons on map
         for (var i=0; i<myAreaPolygon.length; i++) {
             myAreaPolygon[i].setMap(null);
@@ -215,11 +215,11 @@ $(function(){
 
     // Define polygon(s) coordinates as lng,lat,elv string and set to 'coordinates' field
     $('#showData').click(function() {
-        
+
         $('#dataPanel').empty();
         var myCoords = Array();
         var myDataString = '';
-        
+
         for (var i=0; i<myAreaPolygon.length; i++) {
             var polygon = myAreaPolygon[i];
             if (polygon != '') {
@@ -238,7 +238,7 @@ $(function(){
                 }
             }
         }
-        
+
         // Update Coordinates display
         myDataString = myDataString.replace(/^[\s\n\r]+|[\s\n\r]+$/g,"");
         $('#dataPanel').append(myDataString.replace(/[\n\r]/g,"<br />"));
@@ -256,20 +256,18 @@ $(function(){
   <div id="main-map">
   </div>
   <div id="side">
-    <div id="header"><b><?php echo $mod_strings['LBL_AREA_EDIT_TITLE']; ?></b><br />
-        <?php echo $mod_strings['LBL_AREA_EDIT_DESC_1']; ?><br />
-        <?php echo $mod_strings['LBL_AREA_EDIT_DESC_2']; ?><br />
-    <input id="reset" value="<?php echo $mod_strings['LBL_AREA_EDIT_RESET']; ?>" type="button" class="navi"/>
-    <input id="showData" value="<?php echo $mod_strings['LBL_AREA_EDIT_USE_AREA_COORDINATES']; ?>" type="button" class="navi"/>
+    <b><?php echo $GLOBALS['mod_strings']['LBL_AREA_EDIT_TITLE']; ?></b><br />
+        <?php echo $GLOBALS['mod_strings']['LBL_AREA_EDIT_DESC_1']; ?><br />
+        <?php echo $GLOBALS['mod_strings']['LBL_AREA_EDIT_DESC_2']; ?><br />
+    <input id="reset" value="<?php echo $GLOBALS['mod_strings']['LBL_AREA_EDIT_RESET']; ?>" type="button" class="navi"/>
+    <input id="showData" value="<?php echo $GLOBALS['mod_strings']['LBL_AREA_EDIT_USE_AREA_COORDINATES']; ?>" type="button" class="navi"/>
     <br />
-        <?php echo $mod_strings['LBL_AREA_EDIT_COORDINATE_RESULTS']; ?><br />
-    </div>
+        <?php echo $GLOBALS['mod_strings']['LBL_AREA_EDIT_COORDINATE_RESULTS']; ?><br />
     <div id="dataPanel">
     </div>
   </div>
 </body>
 </html>
-
 <?php
 
   }

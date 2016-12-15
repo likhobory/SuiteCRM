@@ -4,49 +4,57 @@ if(!defined('sugarEntry') || !sugarEntry) die('Not A Valid Entry Point');
 
 class Jjwg_MarkersViewMarker_Edit_Map extends SugarView {
 
-  function Jjwg_MarkersViewMarker_Edit_Map() {
-    parent::SugarView();
+  function __construct() {
+    parent::__construct();
   }
-  
+
+    /**
+     * @deprecated deprecated since version 7.6, PHP4 Style Constructors are deprecated and will be remove in 7.8, please update your code, use __construct instead
+     */
+    function Jjwg_MarkersViewMarker_Edit_Map(){
+        $deprecatedMessage = 'PHP4 Style Constructors are deprecated and will be remove in 7.8, please update your code';
+        if(isset($GLOBALS['log'])) {
+            $GLOBALS['log']->deprecated($deprecatedMessage);
+        }
+        else {
+            trigger_error($deprecatedMessage, E_USER_DEPRECATED);
+        }
+        self::__construct();
+    }
+
+
   function display() {
-    
-    global $sugar_config;
-    global $jjwg_config;
-    global $currentModule;
-    global $current_user;
-    global $theme;
-    global $mod_strings;
-    global $loc;
 
     // Users local settings for decimal seperator and number grouping seperator
-    $dec_sep = $sugar_config['default_decimal_seperator'];
-    $user_dec_sep = $current_user->getPreference('dec_sep');
-    $dec_sep = (empty($user_dec_sep) ? $sugar_config['default_decimal_seperator'] : $user_dec_sep);
+    $dec_sep = $GLOBALS['sugar_config']['default_decimal_seperator'];
+    $user_dec_sep = $GLOBALS['current_user']->getPreference('dec_sep');
+    $dec_sep = (empty($user_dec_sep) ? $GLOBALS['sugar_config']['default_decimal_seperator'] : $user_dec_sep);
 
-    $num_grp_sep = $sugar_config['default_number_grouping_seperator'];
-    $user_num_grp_sep = $current_user->getPreference('num_grp_sep');
-    $num_grp_sep = (empty($user_num_grp_sep) ? $sugar_config['default_number_grouping_seperator'] : $user_num_grp_sep);
+    $num_grp_sep = $GLOBALS['sugar_config']['default_number_grouping_seperator'];
+    $user_num_grp_sep = $GLOBALS['current_user']->getPreference('num_grp_sep');
+    $num_grp_sep = (empty($user_num_grp_sep) ? $GLOBALS['sugar_config']['default_number_grouping_seperator'] : $user_num_grp_sep);
 
-    $custom_markers_dir = 'custom/themes/default/images/jjwg_Markers/';
+    $custom_markers_dir = 'themes/default/images/jjwg_Markers/';
 
 ?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"> 
- 
-<html xmlns="http://www.w3.org/1999/xhtml"> 
-  <head> 
-  <title><?php echo $mod_strings['LBL_MARKER_DISPLAY']; ?></title> 
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+  <title><?php echo $GLOBALS['mod_strings']['LBL_MARKER_DISPLAY']; ?></title>
   <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
-  <meta http-equiv="content-type" content="text/html; charset=utf-8"/> 
-  <link rel="stylesheet" type="text/css" href="cache/themes/<?php echo $theme; ?>/css/style.css" />
+  <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+  <link rel="stylesheet" type="text/css" href="cache/themes/<?php echo $GLOBALS['theme']; ?>/css/style.css" />
   <style type="text/css">
     html { height: 100% }
     body { height: 100%; margin: 0px; padding: 0px }
     #mapCanvas {
-      width: 500px;
-      height: 300px;
+      width: 700px;
+      height: 500px;
       float: left;
     }
     #infoPanel {
+      width: 450px;
       float: left;
       margin-left: 10px;
     }
@@ -62,7 +70,7 @@ class Jjwg_MarkersViewMarker_Edit_Map extends SugarView {
       color: #000000;
     }
   </style>
-  
+
   <script type="text/javascript" src="//maps.google.com/maps/api/js?sensor=false"></script>
 
   <script type="text/javascript">
@@ -110,8 +118,8 @@ function updateEditFormLatLng(latLng) {
 function initialize() {
 
   var latLng = new google.maps.LatLng(
-    <?php echo (!empty($loc['lat'])) ? $loc['lat'] : $jjwg_config['map_default_center_latitude']; ?>, 
-    <?php echo (!empty($loc['lng'])) ? $loc['lng'] : $jjwg_config['map_default_center_longitude']; ?> 
+    <?php echo (!empty($GLOBALS['loc']['lat'])) ? $GLOBALS['loc']['lat'] : $GLOBALS['jjwg_config']['map_default_center_latitude']; ?>,
+    <?php echo (!empty($GLOBALS['loc']['lng'])) ? $GLOBALS['loc']['lng'] : $GLOBALS['jjwg_config']['map_default_center_longitude']; ?>
   );
 
   var map = new google.maps.Map(document.getElementById('mapCanvas'), {
@@ -120,9 +128,9 @@ function initialize() {
     mapTypeId: google.maps.MapTypeId.ROADMAP
   });
 <?php
-  if (!empty($loc['image'])) {
+  if (!empty($GLOBALS['loc']['image'])) {
 ?>
-  var customImage = new google.maps.MarkerImage('<?php echo $custom_markers_dir; ?>/<?php echo javascript_escape($loc['image']); ?>.png',
+  var customImage = new google.maps.MarkerImage('<?php echo $custom_markers_dir; ?>/<?php echo javascript_escape($GLOBALS['loc']['image']); ?>.png',
     new google.maps.Size(32,37),
     new google.maps.Point(0,0),
     new google.maps.Point(16,37)
@@ -134,39 +142,34 @@ function initialize() {
 
   var marker = new google.maps.Marker({
     position: latLng,
-    title: '<?php echo javascript_escape($loc['name']); ?>',
+    title: '<?php echo javascript_escape($GLOBALS['loc']['name']); ?>',
     map: map,
-<?php
-  if (!empty($loc['image'])) {
-?>
     icon: customImage,
     shape: shape,
-<?php
-  } // empty image
-?>
     draggable: true
   });
-  
+
   // Update current position info.
   updateMarkerPosition(latLng);
   geocodePosition(latLng);
-  
+
   // Add dragging event listeners.
   google.maps.event.addListener(marker, 'dragstart', function() {
     updateMarkerAddress('Dragging...');
   });
-  
+
   google.maps.event.addListener(marker, 'drag', function() {
     updateMarkerStatus('Dragging...');
     updateMarkerPosition(marker.getPosition());
   });
-  
+
   google.maps.event.addListener(marker, 'dragend', function() {
     updateMarkerStatus('Drag ended');
     geocodePosition(marker.getPosition());
     // Update the parent window edit view form lat/lng
     updateEditFormLatLng(marker.getPosition());
   });
+
 }
 
 // Onload handler to fire off the app.
@@ -174,17 +177,15 @@ google.maps.event.addDomListener(window, 'load', initialize);
 </script>
 </head>
 <body>
-  
   <div id="mapCanvas"></div>
   <div id="infoPanel">
-    <b><?php echo $mod_strings['LBL_MARKER_MARKER_STATUS']; ?></b>
-    <div id="markerStatus"><i><?php echo $mod_strings['LBL_MARKER_EDIT_DESCRIPTION']; ?></i></div>
-    <b><?php echo $mod_strings['LBL_MARKER_MARKER_POSITION']; ?></b>
+    <b><?php echo $GLOBALS['mod_strings']['LBL_MARKER_MARKER_STATUS']; ?></b>
+    <div id="markerStatus"><i><?php echo $GLOBALS['mod_strings']['LBL_MARKER_EDIT_DESCRIPTION']; ?></i></div>
+    <b><?php echo $GLOBALS['mod_strings']['LBL_MARKER_MARKER_POSITION']; ?></b>
     <div id="info"></div>
-    <b><?php echo $mod_strings['LBL_MARKER_CLOSEST_MATCHING_ADDRESS']; ?>!!!</b>
+    <b><?php echo $GLOBALS['mod_strings']['LBL_MARKER_CLOSEST_MATCHING_ADDRESS']; ?></b>
     <div id="address"></div>
   </div>
-
 </body>
 </html>
 
@@ -193,4 +194,3 @@ google.maps.event.addDomListener(window, 'load', initialize);
   }
 
 }
-?>
